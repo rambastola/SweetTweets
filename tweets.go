@@ -1,44 +1,48 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
-	"log"
+	"os"
+
+	hc "cirello.io/HumorChecker"
+
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 )
 
-func analysis() {
+func analysis(tweets []twitter.Tweet) map[string]twitter.Tweet {
+	/*
+		Sentiment the tweets
+	*/
+	m := make(map[string]twitter.Tweet) //map to store the tweet its analysis
 
-	// fmt.Printf("%#v\n", hc.Analyze("Hey you worthless scumbag"))
-	// fmt.Printf("%#v\n", hc.Positivity("life is very good")) //check positive max score 6
-	// fmt.Printf("%#v\n", hc.Negativity("Hey you worthless scumbag")) //check neg max score -6
-
+	for i := 0; i < len(tweets); i++ {
+		analyzed := fmt.Sprintf("%#v\n", hc.Positivity(tweets[i].Text))
+		m[analyzed] = tweets[i]
+	}
+	return m
 }
 
 func main() {
-	//// TODO: user input to be searched
-	//// TODO: sentiment the how positive/negative the tweet is
 
-	config := oauth1.NewConfig(consumerKey, consumerSecret)                   //consumerKey, consumerSecret
-	token := oauth1.NewToken(accessToken, accessSecret) //accessToken, accessSecret
-	// http.Client will automatically authorize Requests
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Print("Enter text to be searched on twitter: ")
+	input, _ := reader.ReadString('\n') //holds the string of user input
+
+	config := oauth1.NewConfig("consumerKey", "consumerSecret") //consumerKey, consumerSecret
+	token := oauth1.NewToken("accessToken", "accessSecret")     //accessToken, accessSecret
 	httpClient := config.Client(oauth1.NoContext, token)
-
-	// twitter client
 	client := twitter.NewClient(httpClient) //creating a new client
 
-	search, _, err := client.Search.Tweets(&twitter.SearchTweetParams{
-		Query: "pi",
+	search, _, err := client.Search.Tweets(&twitter.SearchTweetParams{ //get the tweets
+		Query: input, Count: 20,
 	})
 
-	// twet, resp, err := client.Statuses.Update("Testing my Twitter Bot.", nil)
 	if err != nil {
 		fmt.Println(err)
 	}
 
-	// fmt.Println(resp)
-	fmt.Println("\n")
-
-	log.Println(search)	//type *twitter.Search
+	fmt.Println(analysis(search.Statuses))
 
 }
